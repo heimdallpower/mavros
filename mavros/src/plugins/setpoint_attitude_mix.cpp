@@ -37,8 +37,7 @@ using SyncPoseTwistThrust = message_filters::Synchronizer<SyncPoseTwistThrustPol
  * Send setpoint attitude/orientation/thrust to FCU controller.
  */
 class SetpointAttitudeMixPlugin : public plugin::PluginBase,
-	private plugin::SetAttitudeTargetMixin<SetpointAttitudeMixPlugin>,
-	private plugin::TF2ListenerMixin<SetpointAttitudeMixPlugin> {
+	private plugin::SetAttitudeTargetMixin<SetpointAttitudeMixPlugin> {
 public:
 	SetpointAttitudeMixPlugin() : PluginBase(),
 		sp_nh("~setpoint_attitude_mix"),
@@ -72,7 +71,6 @@ public:
 
 private:
 	friend class SetAttitudeTargetMixin;
-	// friend class TF2ListenerMixin;
 	ros::NodeHandle sp_nh;
 
 	message_filters::Subscriber<mavros_msgs::Thrust> th_sub;
