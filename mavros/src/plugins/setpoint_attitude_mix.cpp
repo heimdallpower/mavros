@@ -61,7 +61,7 @@ public:
 		 * by using an adaptative algorithm <http://wiki.ros.org/message_filters/ApproximateTime>
 		 */
 		sync_pose_twist.reset(new SyncPoseTwistThrust(SyncPoseTwistThrustPolicy(10), pose_sub, twist_sub, th_sub));
-		sync_pose_twist->registerCallback(boost::bind(&SetpointAttitudeMixPlugin::attitude_pose_twist_cb, this, _1, _2));
+		sync_pose_twist->registerCallback(boost::bind(&SetpointAttitudeMixPlugin::attitude_pose_twist_cb, this, _1, _2, _3));
 	}
 
 	Subscriptions get_subscriptions() override
