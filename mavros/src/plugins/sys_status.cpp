@@ -1057,6 +1057,15 @@ private:
 		est_status_msg->accel_error_status_flag = !!(status.flags & enum_value(ESF::ACCEL_ERROR));
 		// [[[end]]] (checksum: da59238f4d4337aeb395f7205db08237)
 
+		est_status_msg->vel_ratio = status.vel_ratio;
+		est_status_msg->pos_horiz_ratio = status.pos_horiz_ratio;
+		est_status_msg->pos_vert_ratio = status.pos_vert_ratio;
+		est_status_msg->mag_ratio = status.mag_ratio;
+		est_status_msg->hagl_ratio = status.hagl_ratio;
+		est_status_msg->tas_ratio = status.tas_ratio;
+		est_status_msg->pos_horiz_accuracy = status.pos_horiz_accuracy;
+		est_status_msg->pos_vert_accuracy = status.pos_vert_accuracy;
+
 		estimator_status_pub.publish(est_status_msg);
 	}
 

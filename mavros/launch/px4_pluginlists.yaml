@@ -1,4 +1,5 @@
 plugin_blacklist:
+- guided_target
 # common
 - safety_area
 # extras
