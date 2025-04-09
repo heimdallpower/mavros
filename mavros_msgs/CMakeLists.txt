@@ -29,6 +29,7 @@ add_message_files(
   EstimatorStatus.msg
   ExtendedState.msg
   FileEntry.msg
+  FlightStatus.msg
   GlobalPositionTarget.msg
   GPSINPUT.msg
   GPSRAW.msg

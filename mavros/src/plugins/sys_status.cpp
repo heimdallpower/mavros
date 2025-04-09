@@ -20,6 +20,7 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/EstimatorStatus.h>
 #include <mavros_msgs/ExtendedState.h>
+#include <mavros_msgs/FlightStatus.h>
 #include <mavros_msgs/StreamRate.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
@@ -490,7 +491,8 @@ public:
 		conn_heartbeat_mav_type(MAV_TYPE::ONBOARD_CONTROLLER),
 		version_retries(RETRIES_COUNT),
 		disable_diag(false),
-		has_battery_status0(false)
+		has_battery_status0(false),
+		has_extended_state(false)
 	{
 		batt_diag.reserve(MAX_NR_BATTERY_STATUS);
 		batt_diag.emplace_back("Battery");
@@ -553,6 +555,7 @@ public:
 
 		state_pub = nh.advertise<mavros_msgs::State>("state", 10, true);
 		extended_state_pub = nh.advertise<mavros_msgs::ExtendedState>("extended_state", 10);
+		flight_status_pub = nh.advertise<mavros_msgs::FlightStatus>("flight_status", 10);
 		batt_pub = nh.advertise<BatteryMsg>("battery", 10);
 		estimator_status_pub = nh.advertise<mavros_msgs::EstimatorStatus>("estimator_status", 10);
 		statustext_pub = nh.advertise<mavros_msgs::StatusText>("statustext/recv", 10);
@@ -595,6 +598,7 @@ private:
 
 	ros::Publisher state_pub;
 	ros::Publisher extended_state_pub;
+	ros::Publisher flight_status_pub;
 	ros::Publisher batt_pub;
 	ros::Publisher estimator_status_pub;
 	ros::Publisher statustext_pub;
@@ -609,6 +613,8 @@ private:
 	int version_retries;
 	bool disable_diag;
 	bool has_battery_status0;
+	bool has_extended_state;
+	boost::shared_ptr<mavros_msgs::ExtendedState> extended_state_msg;
 
 	using M_VehicleInfo = std::unordered_map<uint16_t, mavros_msgs::VehicleInfo>;
 	M_VehicleInfo vehicles;
@@ -755,6 +761,26 @@ private:
 		state_pub.publish(state_msg);
 	}
 
+	static uint8_t get_flight_status(const bool armed, const uint8_t landed_state)
+	{
+		if (!armed && landed_state == mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND)
+		{
+			return mavros_msgs::FlightStatus::STOPPED;
+		}
+		else if (armed && landed_state == mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND)
+		{
+			return mavros_msgs::FlightStatus::IDLING;
+		}
+		else if (armed && landed_state == mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR)
+		{
+			return mavros_msgs::FlightStatus::IN_AIR;
+		}
+		else
+		{
+			return mavros_msgs::FlightStatus::UNDEFINED;
+		}
+	}
+
 	/* -*- message handlers -*- */
 
 	void handle_heartbeat(const mavlink::mavlink_message_t *msg, mavlink::minimal::msg::HEARTBEAT &hb)
@@ -807,16 +833,29 @@ private:
 
 		state_pub.publish(state_msg);
 		hb_diag.tick(hb.type, hb.autopilot, state_msg->mode, hb.system_status);
+
+		if (has_extended_state)
+		{
+			auto flight_status_msg = boost::make_shared<mavros_msgs::FlightStatus>();
+			flight_status_msg->header.stamp = stamp;
+			flight_status_msg->data = get_flight_status(state_msg->armed, extended_state_msg->landed_state);
+
+			flight_status_pub.publish(flight_status_msg);
+		}
 	}
 
 	void handle_extended_sys_state(const mavlink::mavlink_message_t *msg, mavlink::common::msg::EXTENDED_SYS_STATE &state)
 	{
-		auto state_msg = boost::make_shared<mavros_msgs::ExtendedState>();
-		state_msg->header.stamp = ros::Time::now();
-		state_msg->vtol_state = state.vtol_state;
-		state_msg->landed_state = state.landed_state;
+		if (!has_extended_state)
+		{
+			extended_state_msg = boost::make_shared<mavros_msgs::ExtendedState>();
+			has_extended_state = true;
+		}
+		extended_state_msg->header.stamp = ros::Time::now();
+		extended_state_msg->vtol_state = state.vtol_state;
+		extended_state_msg->landed_state = state.landed_state;
 
-		extended_state_pub.publish(state_msg);
+		extended_state_pub.publish(extended_state_msg);
 	}
 
 	void handle_sys_status(const mavlink::mavlink_message_t *msg, mavlink::common::msg::SYS_STATUS &stat)
@@ -1138,6 +1177,7 @@ private:
 	void connection_cb(bool connected) override
 	{
 		has_battery_status0 = false;
+		has_extended_state = false;
 
 		// if connection changes, start delayed version request
 		version_retries = RETRIES_COUNT;
