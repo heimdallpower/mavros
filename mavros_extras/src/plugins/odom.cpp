@@ -225,12 +225,12 @@ private:
 		Matrix6d r_vel = Matrix6d::Zero();	//!< Zero initialized velocity 6-D Covariance matrix. WRT child_frame_id
 
 		mavlink::common::msg::ODOMETRY msg {};
-		msg.frame_id = utils::enum_value(MAV_FRAME::LOCAL_FRD);
+		msg.frame_id = utils::enum_value(MAV_FRAME::RESERVED_16); //!< MAV_FRAME_VISION_NED
 		msg.child_frame_id = utils::enum_value(MAV_FRAME::BODY_FRD);
 		msg.estimator_type = utils::enum_value(MAV_ESTIMATOR_TYPE::VISION);
 
 		/**
-		 * Position parsing from odometry's parent frame to "LOCAL_FRD" frame.
+		 * Position parsing from odometry's parent frame to "MAV_FRAME_VISION_NED" frame.
 		 */
 		position = Eigen::Vector3d(tf_parent2parent_des.linear() * ftf::to_eigen(odom->pose.pose.position));
 
