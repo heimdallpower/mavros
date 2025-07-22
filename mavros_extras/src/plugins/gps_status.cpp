@@ -101,7 +101,7 @@ private:
 		ros_msg->eph               = mav_msg.eph;
 		ros_msg->epv               = mav_msg.epv;
 		ros_msg->vel               = mav_msg.vel;
-		ros_msg->cog               = mav_msg.cog;
+		ros_msg->cog               = UINT16_MAX; // we are using the cog field to send yaw instead
 		ros_msg->satellites_visible = mav_msg.satellites_visible;
 		ros_msg->alt_ellipsoid     = INT32_MAX;	// information not available in GPS2_RAW mavlink message
 		ros_msg->h_acc             = UINT32_MAX;// information not available in GPS2_RAW mavlink message
@@ -110,6 +110,7 @@ private:
 		ros_msg->hdg_acc           = UINT32_MAX;// information not available in GPS2_RAW mavlink message
 		ros_msg->dgps_numch        = mav_msg.dgps_numch;
 		ros_msg->dgps_age          = mav_msg.dgps_age;
+		ros_msg->yaw               = mav_msg.cog;
 
 		gps2_raw_pub.publish(ros_msg);
 	}
