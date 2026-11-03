@@ -17,6 +17,11 @@ int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "mavros");
 
+	// On simulated time ROS time is 0 until the first /clock, and timesync samples taken before it start the offset
+	// filter far off. With the system clock (no /use_sim_time) time is always valid, so this returns at once.
+	ros::start();
+	ros::Time::waitForValid();
+
 	mavros::MavRos mavros;
 	mavros.spin();
 
